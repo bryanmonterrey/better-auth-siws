@@ -95,7 +95,7 @@ export const siwsPlugin = (options: SiwsOptions) =>
       }
 
       // 3) Delete it to enforce single-use
-      await ctx.context.internalAdapter.deleteVerificationValue(`siws:${address}`);
+      await ctx.context.internalAdapter.deleteVerificationByIdentifier(`siws:${address}`);
 
       // 4) Domain binding
       const expectedDomain = options.domain;
