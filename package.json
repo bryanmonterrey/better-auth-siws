@@ -1,6 +1,6 @@
 {
   "name": "better-auth-siws",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Sign-In With Solana (SIWS) plugin for Better Auth",
   "license": "MIT",
   "author": "Bryan Monterrey",
