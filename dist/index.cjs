@@ -109,7 +109,10 @@ var siwsPlugin = (options) => ({
         import_bs58.default.decode(address)
       );
       if (!verified) return new Response("Invalid signature", { status: 401 });
-      const existingAccount = await ctx.context.internalAdapter.findAccount(buildAccountId(address));
+      const existingAccount = await ctx.context.internalAdapter.findAccountByProviderId(
+        buildAccountId(address),
+        "siws"
+      );
       let userObject;
       if (!existingAccount) {
         const user = await ctx.context.internalAdapter.createOAuthUser({
@@ -119,13 +122,13 @@ var siwsPlugin = (options) => ({
         }, {
           providerId: "siws",
           accountId: buildAccountId(address)
-        }, ctx);
+        });
         userObject = user.user;
       } else {
         const user = await ctx.context.internalAdapter.findUserById(existingAccount.userId);
         userObject = user;
       }
-      const session = await ctx.context.internalAdapter.createSession(userObject.id, ctx);
+      const session = await ctx.context.internalAdapter.createSession(userObject.id);
       await (0, import_cookies.setSessionCookie)(ctx, { session, user: userObject });
       return ctx.json({ user: userObject.id, session });
     })

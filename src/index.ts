@@ -112,10 +112,17 @@ export const siwsPlugin = (options: SiwsOptions) =>
       if (!verified) return new Response("Invalid signature", { status: 401 });
 
       // 6) Upsert user + create session
-      const existingAccount = await ctx.context.internalAdapter.findAccount(buildAccountId(address));
+      // better-auth >=1.6: `findAccount(accountId)` was replaced by
+      // `findAccountByProviderId(accountId, providerId)`.
+      const existingAccount = await ctx.context.internalAdapter.findAccountByProviderId(
+        buildAccountId(address),
+        "siws",
+      );
 
       let userObject: User;
       if (!existingAccount) {
+        // createOAuthUser is `(user, account)` in >=1.6; the request context is
+        // read internally via async-local-storage, so no third arg is passed.
         const user = await ctx.context.internalAdapter.createOAuthUser({
           email: address,
           emailVerified: true,
@@ -123,14 +130,17 @@ export const siwsPlugin = (options: SiwsOptions) =>
         }, {
           providerId: "siws",
           accountId: buildAccountId(address),
-        }, ctx);
-        userObject = user.user;
+        });
+        userObject = user!.user;
       } else {
         const user = await ctx.context.internalAdapter.findUserById(existingAccount.userId);
         userObject = user!;
       }
 
-      const session = await ctx.context.internalAdapter.createSession(userObject.id, ctx);
+      // createSession is `(userId, dontRememberMe?, …)` in >=1.6. The old code
+      // passed `ctx` as the 2nd arg, which read as a truthy dontRememberMe and
+      // silently capped sessions at 24h. ip/userAgent come from ALS now.
+      const session = await ctx.context.internalAdapter.createSession(userObject.id);
       await setSessionCookie(ctx, { session, user: userObject });
 
       return ctx.json({ user: userObject.id, session });
