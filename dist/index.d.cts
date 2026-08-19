@@ -1,5 +1,5 @@
 import * as better_call from 'better-call';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 
 interface SiwsOptions {
     domain: string;
@@ -23,11 +23,7 @@ declare const siwsPlugin: (options: SiwsOptions) => {
             method: "POST";
             body: z.ZodObject<{
                 address: z.ZodString;
-            }, "strip", z.ZodTypeAny, {
-                address?: string;
-            }, {
-                address?: string;
-            }>;
+            }, z.core.$strip>;
         }, {
             nonce: string;
             domain: string;
@@ -39,15 +35,7 @@ declare const siwsPlugin: (options: SiwsOptions) => {
                 address: z.ZodString;
                 message: z.ZodString;
                 signature: z.ZodString;
-            }, "strip", z.ZodTypeAny, {
-                message?: string;
-                address?: string;
-                signature?: string;
-            }, {
-                message?: string;
-                address?: string;
-                signature?: string;
-            }>;
+            }, z.core.$strip>;
         }, Response | {
             user: string;
             session: {
@@ -57,8 +45,8 @@ declare const siwsPlugin: (options: SiwsOptions) => {
                 userId: string;
                 expiresAt: Date;
                 token: string;
-                ipAddress?: string;
-                userAgent?: string;
+                ipAddress?: string | null | undefined;
+                userAgent?: string | null | undefined;
             };
         }>;
     };

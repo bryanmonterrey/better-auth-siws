@@ -91,7 +91,8 @@ describe("SIWS verify (direct server API) — using @solana/web3.js", () => {
   it("returns 400 (throws) on invalid payload", async () => {
     await expect(
       auth.api.verify({
-        body: {},
+        // deliberately empty — the endpoint must reject it
+        body: {} as never,
         headers: { origin: "http://localhost:3000" },
       })
     ).rejects.toThrow();

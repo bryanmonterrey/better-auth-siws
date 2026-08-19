@@ -36,7 +36,7 @@ module.exports = __toCommonJS(index_exports);
 var import_api = require("better-auth/api");
 var import_bs58 = __toESM(require("bs58"), 1);
 var ed25519 = __toESM(require("@noble/ed25519"), 1);
-var import_v3 = require("zod/v3");
+var import_zod = require("zod");
 var import_cookies = require("better-auth/cookies");
 function buildSiwsMessage(i) {
   const lines = [
@@ -55,14 +55,28 @@ function buildSiwsMessage(i) {
 - ${i.resources.join("\n- ")}`);
   return lines.join("\n");
 }
+var SIWS_PROVIDER_ID = "siws";
+var SIWS_ISSUER = `local:${encodeURIComponent(SIWS_PROVIDER_ID)}`;
+var usesIssuerIdentity = (adapter) => typeof adapter.findAccountByKey === "function";
+async function findSiwsAccount(adapter, accountId) {
+  if (usesIssuerIdentity(adapter)) {
+    return adapter.findAccountByKey({ issuer: SIWS_ISSUER, accountId });
+  }
+  if (typeof adapter.findAccountByProviderId === "function") {
+    return adapter.findAccountByProviderId(accountId, SIWS_PROVIDER_ID);
+  }
+  throw new Error(
+    "better-auth's internalAdapter exposes neither findAccountByKey (>=1.7) nor findAccountByProviderId (>=1.6)"
+  );
+}
 var siwsPlugin = (options) => ({
   id: "siws",
   endpoints: {
     // POST /siws/start -> { nonce, domain, uri }
     start: (0, import_api.createAuthEndpoint)("/siws/start", {
       method: "POST",
-      body: import_v3.z.object({
-        address: import_v3.z.string().min(32)
+      body: import_zod.z.object({
+        address: import_zod.z.string().min(32)
       })
     }, async (ctx) => {
       const { address } = ctx.body;
@@ -84,10 +98,10 @@ var siwsPlugin = (options) => ({
     // POST /siws/verify -> verify signature, bind domain, upsert user, create session
     verify: (0, import_api.createAuthEndpoint)("/siws/verify", {
       method: "POST",
-      body: import_v3.z.object({
-        address: import_v3.z.string().min(32),
-        message: import_v3.z.string(),
-        signature: import_v3.z.string()
+      body: import_zod.z.object({
+        address: import_zod.z.string().min(32),
+        message: import_zod.z.string(),
+        signature: import_zod.z.string()
       })
     }, async (ctx) => {
       const { address, message, signature } = ctx.body;
@@ -109,20 +123,21 @@ var siwsPlugin = (options) => ({
         import_bs58.default.decode(address)
       );
       if (!verified) return new Response("Invalid signature", { status: 401 });
-      const existingAccount = await ctx.context.internalAdapter.findAccountByProviderId(
-        buildAccountId(address),
-        "siws"
-      );
+      const adapter = ctx.context.internalAdapter;
+      const accountId = buildAccountId(address);
+      const existingAccount = await findSiwsAccount(adapter, accountId);
       let userObject;
       if (!existingAccount) {
+        const accountPayload = {
+          providerId: SIWS_PROVIDER_ID,
+          accountId,
+          ...usesIssuerIdentity(adapter) ? { issuer: SIWS_ISSUER } : {}
+        };
         const user = await ctx.context.internalAdapter.createOAuthUser({
           email: address,
           emailVerified: true,
           name: `sol:${address.slice(0, 4)}\u2026${address.slice(-4)}`
-        }, {
-          providerId: "siws",
-          accountId: buildAccountId(address)
-        });
+        }, accountPayload);
         userObject = user.user;
       } else {
         const user = await ctx.context.internalAdapter.findUserById(existingAccount.userId);

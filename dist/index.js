@@ -2,7 +2,7 @@
 import { createAuthEndpoint } from "better-auth/api";
 import bs58 from "bs58";
 import * as ed25519 from "@noble/ed25519";
-import { z } from "zod/v3";
+import { z } from "zod";
 import { setSessionCookie } from "better-auth/cookies";
 function buildSiwsMessage(i) {
   const lines = [
@@ -20,6 +20,20 @@ function buildSiwsMessage(i) {
   if (i.resources?.length) lines.push(`Resources:
 - ${i.resources.join("\n- ")}`);
   return lines.join("\n");
+}
+var SIWS_PROVIDER_ID = "siws";
+var SIWS_ISSUER = `local:${encodeURIComponent(SIWS_PROVIDER_ID)}`;
+var usesIssuerIdentity = (adapter) => typeof adapter.findAccountByKey === "function";
+async function findSiwsAccount(adapter, accountId) {
+  if (usesIssuerIdentity(adapter)) {
+    return adapter.findAccountByKey({ issuer: SIWS_ISSUER, accountId });
+  }
+  if (typeof adapter.findAccountByProviderId === "function") {
+    return adapter.findAccountByProviderId(accountId, SIWS_PROVIDER_ID);
+  }
+  throw new Error(
+    "better-auth's internalAdapter exposes neither findAccountByKey (>=1.7) nor findAccountByProviderId (>=1.6)"
+  );
 }
 var siwsPlugin = (options) => ({
   id: "siws",
@@ -75,20 +89,21 @@ var siwsPlugin = (options) => ({
         bs58.decode(address)
       );
       if (!verified) return new Response("Invalid signature", { status: 401 });
-      const existingAccount = await ctx.context.internalAdapter.findAccountByProviderId(
-        buildAccountId(address),
-        "siws"
-      );
+      const adapter = ctx.context.internalAdapter;
+      const accountId = buildAccountId(address);
+      const existingAccount = await findSiwsAccount(adapter, accountId);
       let userObject;
       if (!existingAccount) {
+        const accountPayload = {
+          providerId: SIWS_PROVIDER_ID,
+          accountId,
+          ...usesIssuerIdentity(adapter) ? { issuer: SIWS_ISSUER } : {}
+        };
         const user = await ctx.context.internalAdapter.createOAuthUser({
           email: address,
           emailVerified: true,
           name: `sol:${address.slice(0, 4)}\u2026${address.slice(-4)}`
-        }, {
-          providerId: "siws",
-          accountId: buildAccountId(address)
-        });
+        }, accountPayload);
         userObject = user.user;
       } else {
         const user = await ctx.context.internalAdapter.findUserById(existingAccount.userId);

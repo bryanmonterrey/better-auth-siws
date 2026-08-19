@@ -1,6 +1,6 @@
 {
   "name": "better-auth-siws",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Sign-In With Solana (SIWS) plugin for Better Auth",
   "license": "MIT",
   "author": "Bryan Monterrey",
@@ -41,13 +41,15 @@
     "@babel/preset-env": "^7.28.3",
     "@jest/globals": "^30.2.0",
     "@solana/web3.js": "^1.98.4",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.2.0",
     "babel-jest": "^30.2.0",
-    "better-auth": "^1.6.16",
+    "better-auth": "^1.7.1",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "tsup": "^8.5.1"
+    "tsup": "^8.5.1",
+    "typescript": "6.0.3"
   },
   "keywords": [
     "better-auth",

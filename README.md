@@ -6,6 +6,25 @@ Simple SIWS plugin for Better Auth. It provides two endpoints — `start` and `v
 - Client plugin: `siwsClientPlugin`
 - Message helper: `buildSiwsMessage`
 
+### Compatibility
+
+| better-auth | better-auth-siws |
+| --- | --- |
+| `1.7.x` | `0.2.0`+ |
+| `1.6.x` | `0.2.0`+ (or `0.1.4`) |
+
+`0.2.0` supports both. better-auth 1.7 re-keyed accounts on `(issuer, accountId)`:
+it added a required `issuer` column, replaced
+`internalAdapter.findAccountByProviderId(accountId, providerId)` with
+`findAccountByKey({ issuer, accountId })`, and SIWS accounts are stored under the
+issuer `local:siws`. The plugin detects which model the host exposes at runtime,
+so one version works on both — but note that **`0.1.4` and earlier break on 1.7**
+at runtime (`findAccountByProviderId is not a function`) with no type error to
+warn you.
+
+Upgrading an existing 1.6 database to 1.7 requires backfilling `account.issuer`
+before better-auth can match existing accounts; SIWS rows take `local:siws`.
+
 ### Installation
 
 ```bash
