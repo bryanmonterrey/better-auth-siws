@@ -1,6 +1,6 @@
 {
   "name": "better-auth-siws",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Sign-In With Solana (SIWS) plugin for Better Auth",
   "license": "MIT",
   "author": "Bryan Monterrey",
@@ -10,12 +10,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./client": {
-      "import": "./dist/client.js",
-      "require": "./dist/client.cjs"
+      "import": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
+      },
+      "require": {
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
     }
   },
   "files": [
