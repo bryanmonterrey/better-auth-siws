@@ -10,7 +10,8 @@ Simple SIWS plugin for Better Auth. It provides two endpoints — `start` and `v
 
 | better-auth | better-auth-siws |
 | --- | --- |
-| `1.7.x` | `0.2.0`+ |
+| `1.7.3`+ | `0.2.2`+ |
+| `1.7.0`–`1.7.2` | `0.2.0`+ |
 | `1.6.x` | `0.2.0`+ (or `0.1.4`) |
 
 `0.2.0` supports both. better-auth 1.7 re-keyed accounts on `(issuer, accountId)`:
@@ -21,6 +22,12 @@ issuer `local:siws`. The plugin detects which model the host exposes at runtime,
 so one version works on both — but note that **`0.1.4` and earlier break on 1.7**
 at runtime (`findAccountByProviderId is not a function`) with no type error to
 warn you.
+
+**`0.2.0`/`0.2.1` are broken on better-auth 1.7.3 and later.** 1.7.3 went back to
+keying accounts on `(providerId, accountId)` and `findAccountByKey` ignores
+`issuer`, so those versions find no existing account and silently create a new
+user on every sign-in — a `200`, no error. `0.2.2` passes both keys and works
+across the whole 1.7 line.
 
 Upgrading an existing 1.6 database to 1.7 requires backfilling `account.issuer`
 before better-auth can match existing accounts; SIWS rows take `local:siws`.

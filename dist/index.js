@@ -26,7 +26,7 @@ var SIWS_ISSUER = `local:${encodeURIComponent(SIWS_PROVIDER_ID)}`;
 var usesIssuerIdentity = (adapter) => typeof adapter.findAccountByKey === "function";
 async function findSiwsAccount(adapter, accountId) {
   if (usesIssuerIdentity(adapter)) {
-    return adapter.findAccountByKey({ issuer: SIWS_ISSUER, accountId });
+    return adapter.findAccountByKey({ providerId: SIWS_PROVIDER_ID, issuer: SIWS_ISSUER, accountId });
   }
   if (typeof adapter.findAccountByProviderId === "function") {
     return adapter.findAccountByProviderId(accountId, SIWS_PROVIDER_ID);

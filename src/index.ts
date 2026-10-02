@@ -58,8 +58,13 @@ const SIWS_ISSUER = `local:${encodeURIComponent(SIWS_PROVIDER_ID)}`;
 type SiwsAccount = { userId: string } | null | undefined;
 
 interface AdapterShape {
-  /** better-auth >= 1.7 — accounts are keyed on (issuer, accountId). */
-  findAccountByKey?: (key: { issuer: string; accountId: string }) => Promise<SiwsAccount>;
+  /**
+   * better-auth >= 1.7. The KEY changed inside the 1.7 line: 1.7.0–1.7.2 read
+   * `{ issuer, accountId }`, 1.7.3+ went back to `{ providerId, accountId }`
+   * and ignores issuer. Each destructures only the field it knows, so both are
+   * always passed.
+   */
+  findAccountByKey?: (key: { providerId: string; issuer: string; accountId: string }) => Promise<SiwsAccount>;
   /** better-auth >= 1.6, removed in 1.7. */
   findAccountByProviderId?: (accountId: string, providerId: string) => Promise<SiwsAccount>;
 }
@@ -69,7 +74,9 @@ const usesIssuerIdentity = (adapter: AdapterShape) => typeof adapter.findAccount
 
 async function findSiwsAccount(adapter: AdapterShape, accountId: string): Promise<SiwsAccount> {
   if (usesIssuerIdentity(adapter)) {
-    return adapter.findAccountByKey!({ issuer: SIWS_ISSUER, accountId });
+    // Passing only `issuer` matched nothing on 1.7.3+ (providerId undefined),
+    // which does not error — it mints a duplicate user on every sign-in.
+    return adapter.findAccountByKey!({ providerId: SIWS_PROVIDER_ID, issuer: SIWS_ISSUER, accountId });
   }
   if (typeof adapter.findAccountByProviderId === "function") {
     return adapter.findAccountByProviderId(accountId, SIWS_PROVIDER_ID);
